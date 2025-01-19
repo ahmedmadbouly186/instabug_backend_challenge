@@ -1,14 +1,32 @@
 class Message < ApplicationRecord
+  include Elasticsearch::Model
+  include Elasticsearch::Model::Callbacks
+
   belongs_to :chat
 
   validates :message_number, uniqueness: { scope: :chat_id, message: "must be unique within the same chat" }
 
-  before_create :set_message_number
+  settings do
+    mappings dynamic: false do
+      indexes :chat_id, type: :keyword  # Ensuring chat_id is indexed for filtering
+      indexes :body, type: :text, analyzer: 'english'  # Full-text search on body
+    end
+  end
 
-  private
-
-  def set_message_number
-    max_message_number = chat.messages.maximum(:message_number) || 0
-    self.message_number = max_message_number + 1
+  def self.search(query, chat_id)
+    __elasticsearch__.search(
+      {
+        query: {
+          bool: {
+            must: [
+              { match: { body: query } },     # Search within the body of the message
+            ],
+            filter: [
+              { term: { chat_id: chat_id.to_i } }  # Filter by chat_id
+            ]
+          }
+        }
+      }
+    )
   end
 end

@@ -1,5 +1,9 @@
+require 'sidekiq/web'
+
+
 Rails.application.routes.draw do
   # Health check endpoint
+  mount Sidekiq::Web => '/sidekiq'
   get "up" => "rails/health#show", as: :rails_health_check
 
   get 'chats', to: 'chats#index' # Add this route to fetch all chats

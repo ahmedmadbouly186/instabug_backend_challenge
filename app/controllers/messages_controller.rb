@@ -1,28 +1,21 @@
 class MessagesController < ApplicationController
   # POST /apps/:app_token/chats/:chat_number/messages
   def create
-    app = App.find_by(token: params[:app_token]) # Find the app by token
+    app = App.find_by(token: params[:app_token])
 
     if app
-      chat = app.chats.find_by(chat_number: params[:chat_number]) # Find the chat by chat_number
+      chat = app.chats.find_by(chat_number: params[:chat_number])
+      
       if chat
-        message = chat.messages.build(message_params) # Build message associated with chat
+        # Generate a unique message_number atomically using Redis to handel concurency
+        redis_key = "chat:#{app.id}:#{chat.chat_number}:message_count"
+        message_number = $redis.incr(redis_key)
+  
+        # Return the message_number immediately
+        render json: { message_number: message_number }, status: :ok
 
-        if message.save
-          chat.increment!(:messages_count) # Increment messages_count for the chat
-
-          # Return the created message (excluding ID)
-          render json: {
-          body: message.body,
-          app_token: app.token,
-          chat_number: chat.chat_number,
-          message_number: message.message_number,
-          created_at: message.created_at,
-          updated_at: message.updated_at
-        }
-        else
-          render json: message.errors, status: :unprocessable_entity
-        end
+        # Push the job to a queue to persist the message asynchronously
+        MessageCreationJob.perform_async(chat.id, message_number, message_params[:body])
       else
         render json: { error: 'Chat not found' }, status: :not_found
       end
@@ -30,26 +23,36 @@ class MessagesController < ApplicationController
       render json: { error: 'App not found' }, status: :not_found
     end
   end
-  
+
   # GET /messages
   def index
     messages = Message.all
-    render json: messages.as_json(except: :id)
+    render json: messages.as_json(except: [:id, :chat_id])
   end
   
-  # GET /apps/:token/chats/:number/messages
+  # GET /apps/:token/chats/:number/messages?query=text
   def chat_messages
     app = App.find_by(token: params[:app_token])
-
     if app
       chat = app.chats.find_by(chat_number: params[:chat_number])
-
+  
       if chat
-        messages = chat.messages
-        render json: messages.as_json(
-          only: [:body, :message_number, :created_at, :updated_at],
-          # methods: [:app_token, :chat_number]
-        )
+        if params[:q].present?
+          messages = Message.search(params[:q], chat.id) 
+          formatted_messages = messages.map do |message|
+            {
+              matching_score: message._score,
+              body: message.body,
+              message_number: message.message_number,
+              created_at: message.created_at,
+              updated_at: message.updated_at
+            }
+          end
+          render json: formatted_messages
+        else
+          messages = chat.messages
+          render json: messages.as_json(except: [:id, :chat_id])
+        end
       else
         render json: { error: 'Chat not found' }, status: :not_found
       end

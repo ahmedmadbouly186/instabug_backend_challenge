@@ -1,3 +1,3 @@
 class App < ApplicationRecord
-    has_many :chats, dependent: :destroy
+  has_many :chats, dependent: :destroy
 end

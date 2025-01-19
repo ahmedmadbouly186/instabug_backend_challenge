@@ -1,18 +1,21 @@
 class ChatsController < ApplicationController
   # POST /apps/:token/chats
   def create
-    app = App.find_by(token: params[:app_token]) # Find the app by token
-
+    app = App.find_by(token: params[:app_token])
     if app
-      chat = app.chats.build # Build the chat from the app
+      # use redis key to use redis atomic increment to handel concurency
+      redis_key = "app:#{app.token}:chat_count"
+      chat_number = $redis.incr(redis_key)
+
+      # Initialize message_count for the new chat in Redis
+      message_count_key = "chat:#{app.id}:#{chat_number}:message_count"
+      $redis.set(message_count_key, 0)  # Default message count
       
-      if chat.save
-        app.increment!(:chat_count) # Increment chat_count for the app
-        # Return the created chat (without ID)
-        render json: chat.as_json(except: :id)
-      else
-        render json: chat.errors, status: :unprocessable_entity
-      end
+      # Return the chat_number immediately
+      render json: { chat_number: chat_number }, status: :ok
+
+      # Push the job to a queue to persist the chat asynchronously
+      ChatCreationJob.perform_async(app.token, chat_number)
     else
       render json: { error: 'App not found' }, status: :not_found
     end
