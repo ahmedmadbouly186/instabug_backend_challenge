@@ -1,9 +1,10 @@
 class AppsController < ApplicationController
   
-  include RetrieveApp
+  # include RetrieveApp
 
-  before_action :find_app, only: [:show]
-
+  # before_action :find_app, only: [:show]
+  # after_action :set_app, only: [:update]
+  
   # POST /apps
   def create
     @app = App.new(app_params)
@@ -28,6 +29,7 @@ class AppsController < ApplicationController
 
   # GET /apps/:token
   def show
+    @app = App.find_by(token: params[:token])
     render json: @app.as_json(only: [:name, :chat_count])
   end
 
@@ -36,7 +38,6 @@ class AppsController < ApplicationController
     @app = App.find_by(token: params[:token])
     if @app.update(app_params)
       # update app in cache
-      $redis.set("app:#{params[:token]}", @app.to_json)
       render json: { name: @app.name, chat_count: @app.chat_count }
     else
       render json: @app.errors, status: :unprocessable_entity

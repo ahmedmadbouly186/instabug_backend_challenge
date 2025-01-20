@@ -5,10 +5,18 @@ if [ -z "${LD_PRELOAD+x}" ]; then
     LD_PRELOAD=$(find /usr/lib -name libjemalloc.so.2 -print -quit)
     export LD_PRELOAD
 fi
-
-# If running the rails server then create or migrate existing database
-if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
-  ./bin/rails db:prepare
+# Wait for the database to be ready
+if [ -n "${DATABASE_HOST}" ]; then
+    echo "Waiting for the database to be ready at ${DATABASE_HOST}..."
+    until mysqladmin ping -h"${DATABASE_HOST}" --silent; do
+        echo "Database is unavailable - waiting..."
+        sleep 2
+    done
+    echo "Database is ready."
 fi
+# If running the rails server then create or migrate existing database
+# if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
+./bin/rails db:prepare
+# fi
 
 exec "${@}"

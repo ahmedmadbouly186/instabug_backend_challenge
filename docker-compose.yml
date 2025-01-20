@@ -1,6 +1,33 @@
 version: "3.8"
 
 services:
+ # MySQL Service
+  mysql:
+    image: mysql:latest
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: my-secret-pw
+    ports:
+      - "3306:3306"
+    restart: always
+    networks:
+      - instabug_backend_challenge
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+  # Redis Service
+  redis:
+    build:
+      context: ./redis  # Assuming your custom Redis Dockerfile is in the ./redis directory
+    container_name: redis
+    ports:
+      - "6400:6400"
+    networks:
+      - instabug_backend_challenge
+
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
     container_name: elasticsearch
@@ -11,3 +38,67 @@ services:
       - discovery.type=single-node
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
       - "xpack.security.enabled=false"
+    networks:
+      - instabug_backend_challenge
+
+  # Rails Application Service
+  rails:
+    build: .
+    container_name: rails_app
+    environment:
+      - RAILS_ENV=development
+      - DATABASE_HOST=mysql
+      - REDIS_URL=redis://redis:6400/0
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    ports:
+      - "3000:3000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      elasticsearch:
+        condition: service_started
+    volumes:
+      - ".:/app"
+    networks:
+      - instabug_backend_challenge
+    command: ["./bin/rails", "server", "-b", "0.0.0.0"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      retries: 3
+      timeout: 10s
+      start_period: 30s
+
+  # Sidekiq Service
+  sidekiq:
+    build: .
+    container_name: sidekiq
+    environment:
+      - RAILS_ENV=development
+      - DATABASE_HOST=mysql
+      - REDIS_URL=redis://redis:6400/0
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    command: bundle exec sidekiq
+    depends_on:
+      rails:
+        condition: service_healthy
+      mysql:
+        condition: service_started
+      redis:
+        condition: service_started
+    volumes:
+      - ".:/app"
+    networks:
+      - instabug_backend_challenge
+
+
+
+volumes:
+  mysql-data:
+    driver: local
+
+networks:
+  instabug_backend_challenge:
+    driver: bridge

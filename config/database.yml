@@ -4,8 +4,9 @@ default: &default
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   username: root
   password: my-secret-pw
-  host: 127.0.0.1
-  port: 5044
+  host: mysql
+  # host: 127.0.0.1
+  port: 3306
 
 development:
   <<: *default
@@ -20,5 +21,5 @@ production:
   database: chat_messages_system_production
   username: root
   password: <%= ENV['MYSQL_ROOT_PASSWORD'] || 'my-secret-pw' %>
-  host: your-production-host
+  host: mysql
   port: 3306

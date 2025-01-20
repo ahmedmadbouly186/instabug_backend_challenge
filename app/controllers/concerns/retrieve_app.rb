@@ -3,6 +3,7 @@ module RetrieveApp
 
   included do
     before_action :find_app
+    after_action :set_app
   end
 
   private
@@ -32,5 +33,9 @@ module RetrieveApp
         return
       end
     end
+  end
+  def set_app
+    # use app token as key
+    $redis.setex("app:#{@app.token}", 3600, @app.to_json)
   end
 end
