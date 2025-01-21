@@ -27,8 +27,15 @@ class MessagesController < ApplicationController
 
   # GET /messages
   def index
-    messages = Message.all
-    render json: messages.as_json(except: [:id, :chat_id])
+    messages = Message.includes(chat: :app) # Eager load associated Chat and App to avoid N+1 queries
+    render json: messages.map { |message| 
+      {
+        app_token: message.chat.app.token,
+        chat_number: message.chat.chat_number,
+        message_number: message.message_number,
+        body: message.body
+      }
+    }
   end
   
   # GET /apps/:token/chats/:number/messages?query=text
@@ -45,14 +52,19 @@ class MessagesController < ApplicationController
               matching_score: message._score,
               body: message.body,
               message_number: message.message_number,
-              created_at: message.created_at,
-              updated_at: message.updated_at
             }
           end
           render json: formatted_messages
         else
           messages = chat.messages
-          render json: messages.as_json(except: [:id, :chat_id])
+          formatted_messages = messages.map do |message|
+            {
+              matching_score: 0,
+              body: message.body,
+              message_number: message.message_number,
+            }
+          end
+          render json: formatted_messages
         end
       else
         render json: { error: 'Chat not found' }, status: :not_found
