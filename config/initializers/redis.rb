@@ -12,10 +12,10 @@ Rails.application.config.after_initialize do
       redis_key = "app:#{app.token}:chat_count"
       $redis.setnx(redis_key, app.chat_count)
     end
-
-    Chat.find_each do |chat|
-      redis_key = "chat:#{chat.app_id}:#{chat.chat_number}:message_count"
-      $redis.setnx(redis_key, chat.messages.maximum(:message_number) || 0)
+    # When you call Chat.includes(:app), Rails performs one query to fetch all Chat records and another query to fetch the associated App records. These queries are structured efficiently to minimize database load.
+    Chat.includes(:app).find_each do |chat|
+      redis_key = "chat:#{chat.app.token}:#{chat.chat_number}:message_count"
+      $redis.setnx(redis_key, chat.messages_count|| 0)
     end
 
     Rails.logger.info("Redis initialization complete.")

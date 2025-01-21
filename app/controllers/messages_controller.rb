@@ -8,14 +8,15 @@ class MessagesController < ApplicationController
       
       if chat
         # Generate a unique message_number atomically using Redis to handel concurency
-        redis_key = "chat:#{app.id}:#{chat.chat_number}:message_count"
+        redis_key = "chat:#{app.token}:#{chat.chat_number}:message_count"
+        puts "redis_key: #{redis_key}"
         message_number = $redis.incr(redis_key)
   
         # Return the message_number immediately
         render json: { message_number: message_number }, status: :ok
 
         # Push the job to a queue to persist the message asynchronously
-        MessageCreationJob.perform_async(chat.id, message_number, message_params[:body])
+        MessageCreationJob.perform_async(app.token, chat.chat_number, message_number, message_params[:body])
       else
         render json: { error: 'Chat not found' }, status: :not_found
       end

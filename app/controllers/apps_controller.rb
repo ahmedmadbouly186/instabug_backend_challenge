@@ -9,7 +9,8 @@ class AppsController < ApplicationController
   def create
     @app = App.new(app_params)
     @app.token = SecureRandom.hex(16)  # Generate a unique token
-
+    @app.chat_count = 0  # Initialize chat_count to 0
+    
     if @app.save
       # Initialize the Redis key for the app's chat_count
       redis_key = "app:#{@app.token}:chat_count"

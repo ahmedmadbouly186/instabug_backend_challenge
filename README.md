@@ -7,7 +7,25 @@ To run the entire stack, simply use:
 ```bash
 docker-compose up --build
 ```
-if the bash closed with error 'service X is unhelathy' so please run the command docker-compose up again ,its happens sometimes because the dependencies 
+
+if the bash closed with error 'service X is unhelathy' so please run the command docker-compose up again after few seconds,its happens sometimes because the dependencies
+
+## Test
+
+by default the main rails server will run on
+
+```
+http://localhost:3000
+```
+
+and go server `for create chat and create message` will run on
+
+```
+http://localhost:8080
+```
+
+see the endpoints section below for all available requests and the parameters or body for each request
+
 ## System Overview
 
 This application is a chat system designed to efficiently manage chats and messages for multiple applications. The system uses a Rails server with Sidekiq for background job processing, Redis for atomic operations and concurrency control, and Elasticsearch for advanced search capabilities.

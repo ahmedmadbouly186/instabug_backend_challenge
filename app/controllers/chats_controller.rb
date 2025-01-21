@@ -8,7 +8,7 @@ class ChatsController < ApplicationController
       chat_number = $redis.incr(redis_key)
 
       # Initialize message_count for the new chat in Redis
-      message_count_key = "chat:#{app.id}:#{chat_number}:message_count"
+      message_count_key = "chat:#{app.token}:#{chat_number}:message_count"
       $redis.set(message_count_key, 0)  # Default message count
       
       # Return the chat_number immediately
@@ -23,8 +23,14 @@ class ChatsController < ApplicationController
 
   # GET /chats
   def index
-    @chats = Chat.all
-    render json: @chats.as_json(only: [:chat_number, :messages_count])
+    @chats = Chat.includes(:app) # Eager load the associated App to avoid N+1 queries
+    render json: @chats.map { |chat| 
+      {
+        chat_number: chat.chat_number,
+        messages_count: chat.messages_count,
+        app_token: chat.app.token # Access the token through the association
+      }
+    }
   end
 
   def app_chats
@@ -32,7 +38,7 @@ class ChatsController < ApplicationController
 
     if app
       chats = app.chats
-      render json: chats.as_json(only: [:chat_number, :message_count, :created_at, :updated_at])
+      render json: chats.as_json(only: [:chat_number, :message_count])
     else
       render json: { error: 'App not found' }, status: :not_found
     end

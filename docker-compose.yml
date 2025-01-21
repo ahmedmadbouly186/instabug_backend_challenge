@@ -26,8 +26,8 @@ services:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
     container_name: elasticsearch
     ports:
-      - "9220:9220"
-      - "9330:9330"
+      - "9200:9200"
+      - "9300:9300"
     environment:
       - discovery.type=single-node
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
@@ -43,9 +43,9 @@ services:
       - RAILS_ENV=development
       - DATABASE_HOST=mysql
       - REDIS_URL=redis://redis:6400/0
-      - ELASTICSEARCH_URL=http://elasticsearch:9220
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
     ports:
-      - "3125:3125"
+      - "3000:3000"
     depends_on:
       mysql:
         condition: service_started
@@ -87,7 +87,23 @@ services:
     networks:
       - instabug_backend_challenge
 
-
+  # Go Service
+  go-service:
+    build:
+      context: ./go  # Path to the Go application directory
+      dockerfile: Dockerfile  # Specify the Dockerfile for the Go service
+    container_name: go-app
+    ports:
+      - "8080:8080"  # Map the Go service port
+    environment:
+      REDIS_URL: redis://redis:6400
+      APP_PORT: 8080
+    depends_on:
+      redis:
+        condition: service_started
+    networks:
+      - instabug_backend_challenge
+    command: ["./main"]
 
 volumes:
   mysql-data:
