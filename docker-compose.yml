@@ -12,12 +12,6 @@ services:
     restart: always
     networks:
       - instabug_backend_challenge
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 20s
   # Redis Service
   redis:
     build:
@@ -32,8 +26,8 @@ services:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
     container_name: elasticsearch
     ports:
-      - "9200:9200"
-      - "9300:9300"
+      - "9220:9220"
+      - "9330:9330"
     environment:
       - discovery.type=single-node
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
@@ -49,12 +43,12 @@ services:
       - RAILS_ENV=development
       - DATABASE_HOST=mysql
       - REDIS_URL=redis://redis:6400/0
-      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - ELASTICSEARCH_URL=http://elasticsearch:9220
     ports:
-      - "3000:3000"
+      - "3125:3125"
     depends_on:
       mysql:
-        condition: service_healthy
+        condition: service_started
       redis:
         condition: service_started
       elasticsearch:

@@ -7,7 +7,7 @@ To run the entire stack, simply use:
 ```bash
 docker-compose up --build
 ```
-
+if the bash closed with error 'service X is unhelathy' so please run the command docker-compose up again ,its happens sometimes because the dependencies 
 ## System Overview
 
 This application is a chat system designed to efficiently manage chats and messages for multiple applications. The system uses a Rails server with Sidekiq for background job processing, Redis for atomic operations and concurrency control, and Elasticsearch for advanced search capabilities.

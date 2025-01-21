@@ -10,10 +10,12 @@ if [ -n "${DATABASE_HOST}" ]; then
     echo "Waiting for the database to be ready at ${DATABASE_HOST}..."
     until mysqladmin ping -h"${DATABASE_HOST}" --silent; do
         echo "Database is unavailable - waiting..."
-        sleep 2
+        sleep 5
     done
     echo "Database is ready."
 fi
+# echo "wait 1 minut before starting."
+# sleep 10
 # If running the rails server then create or migrate existing database
 # if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
 ./bin/rails db:prepare
