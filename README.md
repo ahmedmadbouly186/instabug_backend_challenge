@@ -10,7 +10,7 @@ docker-compose up --build
 
 if the bash closed with error 'service X is unhelathy' so please run the command docker-compose up again after few seconds,its happens sometimes because the dependencies
 
-## Test
+## RUN
 
 by default the main rails server will run on
 
@@ -34,6 +34,22 @@ Additionally, a Go server running on port `8080` has been implemented to handle 
 - Retrieve the next `chat_number` or `message_number` from Redis with atomic updates to prevent race conditions.
 - Return the generated number to the client.
 - Push the creation request to a background job for further processing.
+
+### Testing
+
+The system has comprehensive test coverage implemented using RSpec:
+
+- **Models Tests**: Ensures data integrity and validation rules are enforced.
+- **Controllers Tests**: Validates API endpoints and request handling.
+- **Jobs Tests**: Verifies the behavior of background job processing.
+
+Tests generate reports in the following formats:
+
+- **Text**: `rspec_report.txt`
+- **JSON**: `rspec_report.json`
+- **HTML**: `rspec_report.html`
+
+These reports provide detailed insights into the system's functionality and can be used for debugging and quality assurance.
 
 ---
 
@@ -335,7 +351,3 @@ Redis ensures atomic operations to generate unique numbers:
 - app_token collision not handled "very rare because it is 32 bytes"
 - redis initializes loading in RAM for all app.chat_count by app token and all chat.message_count by app_token+chat_number, if there are too many records, redis or the whole system may crash
 - In creating a chat request, the system gets the next unused chat_number of "specific app" from atomic RAM storage and returns it to the client and the background worker will handle the actual creation asynchronously, but if the background worker fails due to internal issues or duplicate chat_number or any other reason, there will be a problem because the user will assume that this chat_number is the creator, and this chat_number will be cached in redis but it will not appear in the actual database
-
-```
-
-```

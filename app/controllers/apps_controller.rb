@@ -18,6 +18,7 @@ class AppsController < ApplicationController
       
       render json: { token: @app.token, name: @app.name, chat_count: @app.chat_count }, status: :created
     else
+      Rails.logger.error("App creation failed: #{@app.errors.full_messages.join(', ')}")
       render json: @app.errors, status: :unprocessable_entity
     end
   end
@@ -31,6 +32,10 @@ class AppsController < ApplicationController
   # GET /apps/:token
   def show
     @app = App.find_by(token: params[:token])
+    if @app.nil?
+      render json: { error: 'App not found' }, status: :not_found
+      return
+    end
     render json: @app.as_json(only: [:name, :chat_count])
   end
 

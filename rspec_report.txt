@@ -1,0 +1,74 @@
+
+AppsController
+  POST #create
+    creates a new app and returns the correct response
+    does not create a new app and returns errors
+  GET #index
+    returns a list of apps
+  GET #show
+    returns the app if found
+    returns 404 if app not found
+  PATCH #update
+    updates the app
+    returns 422 if update fails
+
+ChatsController
+  POST #create
+2025-01-22T02:05:54.247Z pid=11848 tid=7pk INFO: Sidekiq 7.3.7 connecting to Redis with options {size: 10, pool_name: "internal", url: "redis://localhost:6400/0"}
+    creates a new chat and returns the correct chat_number
+    returns 404 if app not found
+  GET #index
+    returns a list of chats
+  GET #app_chats
+    returns all chats for a given app
+    returns 404 if app not found
+
+MessagesController
+  POST #create
+redis_key: chat:516c572a75c258767d0bf352b2df1c9a:4583:message_count
+    creates a new message and returns the correct message_number
+    returns 404 if app not found
+    returns 404 if chat not found
+  GET #index
+    returns a list of messages
+  GET #chat_messages
+    returns messages from a specific chat
+    returns 404 if app not found
+    returns 404 if chat not found
+
+ChatCreationJob
+  creates a chat and increments the chat_count of the app
+  logs an error if the app is not found
+  logs an error if chat creation fails
+
+MessageCreationJob
+  creates a message and increments the message_count of the chat
+  logs an error if the app is not found
+  logs an error if the chat is not found
+  logs an error if message creation fails
+
+App
+  is valid with valid attributes
+  is invalid without a name
+  is invalid with a duplicate token
+
+Chat
+  belongs to an app
+  is invalid without a chat_number
+  is invalid without an app_id
+  is valid with valid attributes
+  has a unique chat_number for the same app
+  has an initial message_count of 0
+
+Message
+  belongs to a chat
+  has a unique message_number within a chat
+  is invalid without a body
+  is invalid without a message_number
+  is invalid with a duplicate message_number within a chat
+  is valid with a body
+  is invalid without a chat_id
+
+Finished in 2.36 seconds (files took 9.6 seconds to load)
+42 examples, 0 failures
+

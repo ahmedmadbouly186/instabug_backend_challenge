@@ -14,7 +14,17 @@ gem 'sidekiq'
 gem 'elasticsearch'
 gem 'elasticsearch-model'
 gem 'elasticsearch-rails'
+group :test do
+  gem 'rspec-rails'
+  gem 'factory_bot_rails'
+  gem 'faker'
+  gem 'database_cleaner-active_record'
+  gem 'shoulda-matchers', '~> 5.0'
+  
 
+  # gem 'sidekiq-testing'
+end
+# gem 'rspec-html-report'
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 # gem "bcrypt", "~> 3.1.7"
 

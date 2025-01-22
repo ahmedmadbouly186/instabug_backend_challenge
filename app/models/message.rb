@@ -3,8 +3,9 @@ class Message < ApplicationRecord
   include Elasticsearch::Model::Callbacks
 
   belongs_to :chat
-
+  validates :message_number, presence: true
   validates :message_number, uniqueness: { scope: :chat_id, message: "must be unique within the same chat" }
+  validates :body, presence: true
 
   settings do
     mappings dynamic: false do
