@@ -1,6 +1,10 @@
 class MessagesController < ApplicationController
   # POST /apps/:app_token/chats/:chat_number/messages
   def create
+    # check the body of the message appear in the request and not blank
+    if message_params[:body].nil? || message_params[:body].empty?
+      return render json: { error: 'Message body cannot be blank' }, status: :bad_request
+    end
     app = App.find_by(token: params[:app_token])
 
     if app

@@ -33,12 +33,19 @@ class ChatsController < ApplicationController
     }
   end
 
+  # GET /apps/:token/chats
   def app_chats
     app = App.find_by(token: params[:app_token])
 
     if app
       chats = app.chats
-      render json: chats.as_json(only: [:chat_number, :message_count])
+      render json: chats.map { |chat| 
+      {
+        chat_number: chat.chat_number,
+        messages_count: chat.messages_count,
+        app_token: app.token # Access the token through the association
+      }
+    }
     else
       render json: { error: 'App not found' }, status: :not_found
     end
